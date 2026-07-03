@@ -1,0 +1,51 @@
+# ─── Python ──────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+.venv/
+.env
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ─── ML Models ───────────────────────────────────────────────────────────────
+backend/ml/models/*.joblib
+backend/ml/models/*.pkl
+
+# ─── RL Agent Checkpoints (large) ────────────────────────────────────────────
+backend/rl_strategy/checkpoints/
+backend/rl_strategy/models/
+
+# ─── FastF1 Cache (large binary files) ───────────────────────────────────────
+backend/cache/
+
+# ─── Logs ────────────────────────────────────────────────────────────────────
+backend/logs/
+*.log
+
+# ─── Database ────────────────────────────────────────────────────────────────
+*.db
+*.sqlite3
+
+# ─── Node / Frontend ─────────────────────────────────────────────────────────
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.env.production
+
+# ─── OS Files ────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── IDE ─────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo

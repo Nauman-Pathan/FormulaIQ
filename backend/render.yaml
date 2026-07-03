@@ -1,0 +1,46 @@
+# Render deployment configuration for FormulaIQ Backend
+# Deploy at: https://render.com/
+
+services:
+  - type: web
+    name: formulaiq-api
+    env: python
+    region: oregon
+    plan: starter
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT --workers 2"
+    healthCheckPath: /health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: formulaiq-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: formulaiq-redis
+          property: connectionString
+      - key: CORS_ORIGINS
+        value: https://formulaiq.vercel.app
+      - key: FASTF1_CACHE_DIR
+        value: /tmp/fastf1_cache
+      - key: MODEL_DIR
+        value: /opt/render/project/src/ml/models
+      - key: LOG_LEVEL
+        value: INFO
+      - key: LOG_FILE
+        value: /tmp/formulaiq.log
+
+databases:
+  - name: formulaiq-db
+    databaseName: formulaiq
+    plan: starter
+    region: oregon
+
+  - name: formulaiq-redis
+    type: redis
+    plan: starter
+    region: oregon
+    maxmemoryPolicy: allkeys-lru
