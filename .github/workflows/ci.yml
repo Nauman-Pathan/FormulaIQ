@@ -1,0 +1,176 @@
+name: FormulaIQ CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+# Cancel in-progress runs on the same branch (save CI minutes)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── Backend Tests ───────────────────────────────────────────────────────────
+  backend-tests:
+    name: Backend Tests (pytest)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run pure-logic unit tests (no DB/network)
+        run: |
+          python -m pytest \
+            tests/test_rl_reward.py \
+            tests/test_rl_state_encoder.py \
+            tests/test_ml_feature_engineering.py \
+            -v --tb=short
+
+      - name: Run API & strategy tests (mocked DB)
+        run: |
+          python -m pytest \
+            tests/test_api_strategy.py \
+            tests/test_api_prediction.py \
+            -v --tb=short
+
+      - name: Run full test suite with coverage
+        run: |
+          pip install pytest-cov --quiet
+          python -m pytest tests/ \
+            --cov=. \
+            --cov-report=term-missing \
+            --cov-report=xml \
+            --ignore=tests/test_api_races.py \
+            --ignore=tests/test_api_drivers.py \
+            -v --tb=short
+        continue-on-error: true
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-coverage
+          path: backend/coverage.xml
+          retention-days: 7
+
+  # ── Frontend Tests ──────────────────────────────────────────────────────────
+  frontend-tests:
+    name: Frontend Tests (vitest)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Vitest test suite
+        run: npm test
+
+      - name: TypeScript type check
+        run: npx tsc --noEmit
+        continue-on-error: true
+
+  # ── Lint ────────────────────────────────────────────────────────────────────
+  lint:
+    name: Lint (ruff + eslint)
+    runs-on: ubuntu-latest
+    needs: []
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Python linting
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install ruff
+        run: pip install ruff --quiet
+
+      - name: Run ruff linter on backend
+        run: ruff check backend/ --select=E,F,W --ignore=E501
+        continue-on-error: true
+
+      # Frontend linting
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend deps
+        run: npm ci
+        working-directory: frontend
+
+      - name: Run ESLint
+        run: npx eslint src --ext .ts,.tsx --max-warnings=30
+        working-directory: frontend
+        continue-on-error: true
+
+  # ── Build Check ─────────────────────────────────────────────────────────────
+  build:
+    name: Frontend Build Check
+    runs-on: ubuntu-latest
+    needs: [frontend-tests]
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production bundle
+        run: npm run build
+        env:
+          VITE_API_URL: https://formulaiq-api.onrender.com/api/v1
