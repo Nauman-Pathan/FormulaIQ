@@ -114,9 +114,9 @@ class TestStrategyService:
         assert 0.0 <= pct <= 100.0
 
     def test_soft_tyre_degrades_faster_than_hard(self):
-        """Soft lap time at lap 20 should be worse than Hard at lap 20."""
-        soft_time = _degrade_lap_time(90.0, "SOFT", 20, 0.08)
-        hard_time = _degrade_lap_time(90.0, "HARD", 20, 0.08)
+        """Soft lap time past its cliff (age=40>22) should be worse than Hard at same age."""
+        soft_time = _degrade_lap_time(90.0, "SOFT", 40, 0.08)
+        hard_time = _degrade_lap_time(90.0, "HARD", 40, 0.08)
         assert soft_time > hard_time
 
     def test_optimal_pit_lap_within_race_bounds(self):

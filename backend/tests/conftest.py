@@ -30,7 +30,7 @@ def mock_cache(monkeypatch):
 def mock_async_db():
     """Return a mock AsyncSession that returns empty scalars by default."""
     session = AsyncMock()
-    result = AsyncMock()
+    result = MagicMock()
     result.scalars.return_value.all.return_value = []
     result.all.return_value = []
     session.execute.return_value = result
