@@ -91,14 +91,14 @@ export default function Dashboard() {
             <Flag className="w-5 h-5 text-f1-red" />
             2026 Race Calendar
           </h2>
-          <span className="badge badge-blue">{races?.length || 0} Rounds</span>
+          <span className="badge badge-blue">{Array.isArray(races) ? races.length : 0} Rounds</span>
         </div>
 
         {racesLoading ? (
           <LoadingSpinner />
         ) : (
           <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
-            {races?.slice(0, 15).map((race: any, i: number) => (
+            {Array.isArray(races) && races.slice(0, 15).map((race: any, i: number) => (
               <motion.div
                 key={race.id}
                 initial={{ opacity: 0, x: -12 }}
