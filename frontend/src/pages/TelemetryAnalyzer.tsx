@@ -222,7 +222,7 @@ export default function TelemetryAnalyzer() {
                         colorscale: 'RdYlGn',
                         size: 3,
                         showscale: i === 0,
-                        colorbar: { title: 'Speed', thickness: 10, len: 0.8, tickfont: { color: 'rgba(255,255,255,0.5)' } },
+                        colorbar: { title: { text: 'Speed' }, thickness: 10, len: 0.8, tickfont: { color: 'rgba(255,255,255,0.5)' } },
                       },
                       name: d.driver_code,
                     }]}

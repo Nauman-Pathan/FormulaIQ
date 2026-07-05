@@ -389,7 +389,7 @@ export default function AIStrategist() {
                         ...PLOT_LAYOUT_BASE,
                         yaxis: {
                           ...PLOT_LAYOUT_BASE.yaxis,
-                          autorange: 'reverse' as const,
+                          autorange: 'reversed' as const,
                           dtick: 1,
                           title: 'Race Position (P1 - P20)'
                         },

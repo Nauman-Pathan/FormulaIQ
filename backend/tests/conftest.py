@@ -25,6 +25,26 @@ def mock_cache(monkeypatch):
     monkeypatch.setattr("utils.cache.cache_set", _cache_set)
 
 
+# ── Global ML models mock ───────────────────────────────────────────────────
+@pytest.fixture(autouse=True)
+def mock_ml_models():
+    """Mock the ML models and metadata globally to avoid loading joblib files from disk."""
+    import numpy as np
+
+    # Create mock models
+    mock_pos = MagicMock()
+    mock_pos.predict = MagicMock(side_effect=lambda X: np.array([float(i + 1) for i in range(len(X))]))
+
+    mock_dnf = MagicMock()
+    mock_dnf.predict_proba = MagicMock(side_effect=lambda X: np.array([[1.0 - 0.05, 0.05] for _ in range(len(X))]))
+
+    with patch("ml.predict._ensure_models_loaded") as mock_ensure, \
+         patch("ml.predict._metadata", {"feature_columns": ["grid_position", "prev3_avg_finish"], "feature_importances": {"grid_position": 0.35}}), \
+         patch("ml.predict._position_model", mock_pos), \
+         patch("ml.predict._dnf_model", mock_dnf):
+        yield
+
+
 # ── Async DB session mock ────────────────────────────────────────────────────
 @pytest.fixture()
 def mock_async_db():
