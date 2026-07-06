@@ -135,13 +135,23 @@ def save_qualifying(db: Session, df: pd.DataFrame) -> int:
         return 0
 
     saved = 0
+    race_cache = {}
+    driver_cache = {}
+
     for _, row in df.iterrows():
         season = int(row.get("season", 0))
         round_num = int(row.get("round_number", 0))
         driver_code = str(row.get("driver_code", row.get("abbreviation", "UNK")))[:3].upper()
 
-        race = db.query(Race).filter_by(season=season, round_number=round_num).first()
-        driver = db.query(Driver).filter_by(driver_code=driver_code, season=season).first()
+        race_key = (season, round_num)
+        if race_key not in race_cache:
+            race_cache[race_key] = db.query(Race).filter_by(season=season, round_number=round_num).first()
+        race = race_cache[race_key]
+
+        driver_key = (driver_code, season)
+        if driver_key not in driver_cache:
+            driver_cache[driver_key] = db.query(Driver).filter_by(driver_code=driver_code, season=season).first()
+        driver = driver_cache[driver_key]
 
         if not race or not driver:
             continue
@@ -173,13 +183,23 @@ def save_lap_times(db: Session, df: pd.DataFrame) -> int:
         return 0
 
     records = []
+    race_cache = {}
+    driver_cache = {}
+
     for _, row in df.iterrows():
         season = int(row.get("season", 0))
         round_num = int(row.get("round_number", 0))
         driver_code = str(row.get("Driver", "UNK"))[:3].upper()
 
-        race = db.query(Race).filter_by(season=season, round_number=round_num).first()
-        driver = db.query(Driver).filter_by(driver_code=driver_code, season=season).first()
+        race_key = (season, round_num)
+        if race_key not in race_cache:
+            race_cache[race_key] = db.query(Race).filter_by(season=season, round_number=round_num).first()
+        race = race_cache[race_key]
+
+        driver_key = (driver_code, season)
+        if driver_key not in driver_cache:
+            driver_cache[driver_key] = db.query(Driver).filter_by(driver_code=driver_code, season=season).first()
+        driver = driver_cache[driver_key]
 
         if not race or not driver:
             continue
